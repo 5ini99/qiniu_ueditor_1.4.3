@@ -1,55 +1,41 @@
 /**
- * User: Jinqn
- * Date: 14-04-08
- * Time: 下午16:34
- * 上传图片对话框逻辑代码,包括tab: 远程图片/上传图片/在线图片/搜索图片
+ * 上传音频对话框逻辑代码,包括tab: 远程音乐/上传音频/在线列表
  */
 
 (function () {
 
-    var uploadFile, 
+    var remoteAudio,
+        uploadAudio,
+        onlineAudio,
         // 添加上传判断参数
         uploadType,
         uploadUrl,
         isDirect,
         // end
-        onlineFile;
+        searchAudio;
 
     window.onload = function () {
         initTabs();
+        initAlign();
         initButtons();
         // 初始化配置
         initUploadType();
     };
 
     /*初始化上传参数 */
-    function initUploadType(){
+    function initUploadType() {
         uploadType = editor.getOpt('uploadType');
-        isDirect   = editor.getOpt('qiniuUploadType');
-        if( uploadType == 'local' || isDirect == 'php' ){
-
+        isDirect = editor.getOpt('qiniuUploadType');
+        if (uploadType == 'local' || isDirect == 'php') {
             var params = utils.serializeParam(editor.queryCommandValue('serverparam')) || '',
-                actionUrl = editor.getActionUrl(editor.getOpt('imageActionName')),
-                url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?':'&') + 'encode=utf-8&' + params);
+                actionUrl = editor.getActionUrl(editor.getOpt('audioActionName')),
+                url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?' : '&') + 'encode=utf-8&' + params);
             uploadUrl = url;
-        }else{
+        } else {
             uploadUrl = editor.getOpt('uploadQiniuUrl');
         }
 
     }
-
-    /* 格式化日期方法 */
-    Date.prototype.Format = function (fmt) { 
-        var o = {
-            "m+": this.getMonth() + 1,
-            "d+": this.getDate(), 
-        };
-        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-        for (var k in o)
-        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-        return fmt;
-    }
-    /* end */
 
     /* 初始化tab标签 */
     function initTabs() {
@@ -61,15 +47,33 @@
             });
         }
 
-        setTabFocus('upload');
+        var img = editor.selection.getRange().getClosedNode();
+        if (img && img.tagName && img.tagName.toLowerCase() == 'img') {
+            setTabFocus('remote');
+        } else {
+            setTabFocus('upload');
+        }
     }
+
+    /* 格式化日期方法 */
+    Date.prototype.Format = function (fmt) {
+        var o = {
+            "m+": this.getMonth() + 1,
+            "d+": this.getDate(),
+        };
+        if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+        for (var k in o)
+            if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        return fmt;
+    }
+    /* end */
 
     /* 初始化tabbody */
     function setTabFocus(id) {
-        if(!id) return;
+        if (!id) return;
         var i, bodyId, tabs = $G('tabhead').children;
         for (i = 0; i < tabs.length; i++) {
-            bodyId = tabs[i].getAttribute('data-content-id')
+            bodyId = tabs[i].getAttribute('data-content-id');
             if (bodyId == id) {
                 domUtils.addClass(tabs[i], 'focus');
                 domUtils.addClass($G(bodyId), 'focus');
@@ -79,11 +83,21 @@
             }
         }
         switch (id) {
+            case 'remote':
+                remoteAudio = remoteAudio || new RemoteAudio();
+                break;
             case 'upload':
-                uploadFile = uploadFile || new UploadFile('queueList');
+                setAlign(editor.getOpt('audioInsertAlign'));
+                uploadAudio = uploadAudio || new UploadAudio('queueList');
                 break;
             case 'online':
-                onlineFile = onlineFile || new OnlineFile('fileList');
+                setAlign(editor.getOpt('audioManagerInsertAlign'));
+                onlineAudio = onlineAudio || new OnlineAudio('audioList');
+                onlineAudio.reset();
+                break;
+            case 'search':
+                setAlign(editor.getOpt('audioManagerInsertAlign'));
+                searchAudio = searchAudio || new SearchAudio();
                 break;
         }
     }
@@ -92,7 +106,7 @@
     function initButtons() {
 
         dialog.onok = function () {
-            var list = [], id, tabs = $G('tabhead').children;
+            var remote = false, list = [], id, tabs = $G('tabhead').children;
             for (var i = 0; i < tabs.length; i++) {
                 if (domUtils.hasClass(tabs[i], 'focus')) {
                     id = tabs[i].getAttribute('data-content-id');
@@ -101,32 +115,184 @@
             }
 
             switch (id) {
+                case 'remote':
+                    list = remoteAudio.getInsertList();
+                    break;
                 case 'upload':
-                    list = uploadFile.getInsertList();
-                    var count = uploadFile.getQueueCount();
+                    list = uploadAudio.getInsertList();
+                    var count = uploadAudio.getQueueCount();
                     if (count) {
                         $('.info', '#queueList').html('<span style="color:red;">' + '还有2个未上传文件'.replace(/[\d]/, count) + '</span>');
                         return false;
                     }
                     break;
                 case 'online':
-                    list = onlineFile.getInsertList();
+                    list = onlineAudio.getInsertList();
+                    break;
+                case 'search':
+                    list = searchAudio.getInsertList();
+                    remote = true;
                     break;
             }
-
-            editor.execCommand('insertfile', list);
+            if (list) {
+                editor.execCommand('insertaudio', list);
+                remote && editor.fireEvent("catchRemoteAudio");
+            }
         };
     }
 
 
-    /* 上传附件 */
-    function UploadFile(target) {
+    /* 初始化对其方式的点击事件 */
+    function initAlign() {
+        /* 点击align图标 */
+        domUtils.on($G("alignIcon"), 'click', function (e) {
+            var target = e.target || e.srcElement;
+            if (target.className && target.className.indexOf('-align') != -1) {
+                setAlign(target.getAttribute('data-align'));
+            }
+        });
+    }
+
+    /* 设置对齐方式 */
+    function setAlign(align) {
+        align = align || 'none';
+        var aligns = $G("alignIcon").children;
+        for (i = 0; i < aligns.length; i++) {
+            if (aligns[i].getAttribute('data-align') == align) {
+                domUtils.addClass(aligns[i], 'focus');
+                $G("align").value = aligns[i].getAttribute('data-align');
+            } else {
+                domUtils.removeClasses(aligns[i], 'focus');
+            }
+        }
+    }
+
+    /* 获取对齐方式 */
+    function getAlign() {
+        var align = $G("align").value || 'none';
+        return align == 'none' ? '' : align;
+    }
+
+
+    /* 在线音频 */
+    function RemoteAudio(target) {
+        this.container = utils.isString(target) ? document.getElementById(target) : target;
+        this.init();
+    }
+
+    RemoteAudio.prototype = {
+        init: function () {
+            this.initContainer();
+            this.initEvents();
+        },
+        initContainer: function () {
+            this.dom = {
+                'url': $G('url'),
+                'title': $G('title'),
+                'width': $G('width'),
+                'height': $G('height'),
+                'border': $G('border'),
+                'vhSpace': $G('vhSpace'),
+                'align': $G('align')
+            };
+            var img = editor.selection.getRange().getClosedNode();
+            if (img) {
+                this.setAudio(img);
+            }
+        },
+        initEvents: function () {
+            var _this = this;
+
+            /* 改变url */
+            domUtils.on($G("url"), 'keyup', updatePreview);
+            domUtils.on($G("border"), 'keyup', updatePreview);
+            domUtils.on($G("title"), 'keyup', updatePreview);
+            domUtils.on($G("width"), 'keyup', updatePreview);
+            domUtils.on($G("height"), 'keyup', updatePreview);
+
+            function updatePreview() {
+                _this.setPreview();
+            }
+        },
+        setAudio: function (img) {
+            /* 不是正常的音频 */
+            if (!img.tagName || img.tagName.toLowerCase() != 'img' && !img.getAttribute("src") || !img.src) return;
+
+            var wordImgFlag = img.getAttribute("word_img"),
+                src = wordImgFlag ? wordImgFlag.replace("&amp;", "&") : (img.getAttribute('_src') || img.getAttribute("src", 2).replace("&amp;", "&")),
+                align = editor.queryCommandValue("audioFloat");
+
+            /* 防止onchange事件循环调用 */
+            if (src !== $G("url").value) $G("url").value = src;
+            if (src) {
+                /* 设置表单内容 */
+                $G("width").value = img.width || '';
+                $G("height").value = img.height || '';
+                $G("border").value = img.getAttribute("border") || '0';
+                $G("vhSpace").value = img.getAttribute("vspace") || '0';
+                $G("title").value = img.title || img.alt || '';
+                setAlign(align);
+                this.setPreview();
+            }
+        },
+        getData: function () {
+            var data = {};
+            for (var k in this.dom) {
+                data[k] = this.dom[k].value;
+            }
+            return data;
+        },
+        setPreview: function () {
+            var url = $G('url').value,
+                ow = parseInt($G('width').value, 10) || 0,
+                oh = parseInt($G('height').value, 10) || 0,
+                border = parseInt($G('border').value, 10) || 0,
+                title = $G('title').value,
+                preview = $G('preview'),
+                width,
+                height;
+
+            url = utils.unhtmlForUrl(url);
+            title = utils.unhtml(title);
+
+            width = ((!ow || !oh) ? preview.offsetWidth : Math.min(ow, preview.offsetWidth));
+            width = width + (border * 2) > preview.offsetWidth ? width : (preview.offsetWidth - (border * 2));
+            height = (!ow || !oh) ? '' : width * oh / ow;
+
+            if (url) {
+                preview.innerHTML = '<audio class="edui-faked-audio" controls="controls" src="' + url + '" width="' + width + '" height="' + height + '" title="' + title + '">' + title +  '</audio>';
+            }
+        },
+        getInsertList: function () {
+            var data = this.getData();
+            if (data['url']) {
+                return [{
+                    src: data['url'],
+                    title: data['title'],
+                    _src: data['url'],
+                    width: data['width'] || '',
+                    height: data['height'] || '',
+                    border: data['border'] || '',
+                    floatStyle: data['align'] || '',
+                    vspace: data['vhSpace'] || '',
+                    alt: data['title'] || '',
+                    style: "width:" + data['width'] + "px;height:" + data['height'] + "px;"
+                }];
+            } else {
+                return [];
+            }
+        }
+    };
+
+    /* 上传音频 */
+    function UploadAudio(target) {
         this.$wrap = target.constructor == String ? $('#' + target) : $(target);
         this.init();
     }
-    UploadFile.prototype = {
+
+    UploadAudio.prototype = {
         init: function () {
-            this.fileList = [];
+            this.audioList = [];
             this.initContainer();
             this.initUploader();
         },
@@ -138,34 +304,34 @@
             var _this = this,
                 $ = jQuery,    // just in case. Make sure it's not an other libaray.
                 $wrap = _this.$wrap,
-            // 图片容器
+                // 音频容器
                 $queue = $wrap.find('.filelist'),
-            // 状态栏，包括进度和控制按钮
+                // 状态栏，包括进度和控制按钮
                 $statusBar = $wrap.find('.statusBar'),
-            // 文件总体选择信息。
+                // 文件总体选择信息。
                 $info = $statusBar.find('.info'),
-            // 上传按钮
+                // 上传按钮
                 $upload = $wrap.find('.uploadBtn'),
-            // 上传按钮
+                // 上传按钮
                 $filePickerBtn = $wrap.find('.filePickerBtn'),
-            // 上传按钮
+                // 上传按钮
                 $filePickerBlock = $wrap.find('.filePickerBlock'),
-            // 没选择文件之前的内容。
+                // 没选择文件之前的内容。
                 $placeHolder = $wrap.find('.placeholder'),
-            // 总体进度条
+                // 总体进度条
                 $progress = $statusBar.find('.progress').hide(),
-            // 添加的文件数量
+                // 添加的文件数量
                 fileCount = 0,
-            // 添加的文件总大小
+                // 添加的文件总大小
                 fileSize = 0,
-            // 优化retina, 在retina下这个值是2
+                // 优化retina, 在retina下这个值是2
                 ratio = window.devicePixelRatio || 1,
-            // 缩略图大小
+                // 缩略图大小
                 thumbnailWidth = 113 * ratio,
                 thumbnailHeight = 113 * ratio,
-            // 可能有pedding, ready, uploading, confirm, done.
+                // 可能有pedding, ready, uploading, confirm, done.
                 state = '',
-            // 所有文件的进度信息，key为file id
+                // 所有文件的进度信息，key为file id
                 percentages = {},
                 supportTransition = (function () {
                     var s = document.createElement('p').style,
@@ -177,16 +343,17 @@
                     s = null;
                     return r;
                 })(),
-            // WebUploader实例
+                // WebUploader实例
                 uploader,
-                actionUrl = editor.getActionUrl(editor.getOpt('fileActionName')),
-                fileMaxSize = editor.getOpt('fileMaxSize'),
-                acceptExtensions = (editor.getOpt('fileAllowFiles') || []).join('').replace(/\./g, ',').replace(/^[,]/, '');;
+                actionUrl = editor.getActionUrl(editor.getOpt('audioActionName')),
+                acceptExtensions = (editor.getOpt('audioAllowFiles') || []).join('').replace(/\./g, ',').replace(/^[,]/, ''),
+                audioMaxSize = editor.getOpt('audioMaxSize'),
+                audioCompressBorder = editor.getOpt('audioCompressBorder');
 
             if (!WebUploader.Uploader.support()) {
                 $('#filePickerReady').after($('<div>').html(lang.errorNotSupport)).hide();
                 return;
-            } else if (!editor.getOpt('fileActionName')) {
+            } else if (!editor.getOpt('audioActionName')) {
                 $('#filePickerReady').after($('<div>').html(lang.errorLoadConfig)).hide();
                 return;
             }
@@ -196,12 +363,28 @@
                     id: '#filePickerReady',
                     label: lang.uploadSelectFile
                 },
+                accept: {
+                    title: 'Audios',
+                    extensions: acceptExtensions,
+                    mimeTypes: 'audio/*'
+                },
                 swf: '../../third-party/webuploader/Uploader.swf',
                 server: actionUrl,
-                fileVal: editor.getOpt('fileFieldName'),
+                fileVal: editor.getOpt('audioFieldName'),
                 duplicate: true,
-                fileSingleSizeLimit: fileMaxSize,
-                compress: false
+                fileSingleSizeLimit: audioMaxSize,    // 默认 2 M
+                compress: editor.getOpt('audioCompressEnable') ? {
+                    width: audioCompressBorder,
+                    height: audioCompressBorder,
+                    // 音频质量，只有type为`audio/jpeg`的时候才有效。
+                    quality: 90,
+                    // 是否允许放大，如果想要生成小图的时候不失真，此选项应该设置为false.
+                    allowMagnify: false,
+                    // 是否允许裁剪。
+                    crop: false,
+                    // 是否保留头部meta信息。
+                    preserveHeaders: true
+                } : false
             });
             uploader.addButton({
                 id: '#filePickerBlock'
@@ -216,10 +399,9 @@
             // 当有文件添加进来时执行，负责view的创建
             function addFile(file) {
                 var $li = $('<li id="' + file.id + '">' +
-                        '<p class="title">' + file.name + '</p>' +
-                        '<p class="imgWrap"></p>' +
-                        '<p class="progress"><span></span></p>' +
-                        '</li>'),
+                    '<p class="imgWrap"></p>' +
+                    '<p class="progress"><span></span></p>' +
+                    '</li>'),
 
                     $btns = $('<div class="file-panel">' +
                         '<span class="cancel">' + lang.uploadDelete + '</span>' +
@@ -254,15 +436,15 @@
                     showError(file.statusText);
                 } else {
                     $wrap.text(lang.uploadPreview);
-                    if ('|png|jpg|jpeg|bmp|gif|'.indexOf('|'+file.ext.toLowerCase()+'|') == -1) {
+                    if ('|png|jpg|jpeg|bmp|gif|'.indexOf('|' + file.ext.toLowerCase() + '|') == -1) {
                         $wrap.empty().addClass('notimage').append('<i class="file-preview file-type-' + file.ext.toLowerCase() + '"></i>' +
-                        '<span class="file-title" title="' + file.name + '">' + file.name + '</span>');
+                            '<span class="file-title">' + file.name + '</span>');
                     } else {
                         if (browser.ie && browser.version <= 7) {
                             $wrap.text(lang.uploadNoPreview);
                         } else {
                             uploader.makeThumb(file, function (error, src) {
-                                if (error || !src) {
+                                if (error || !src || (/^data:/.test(src) && browser.ie && browser.version <= 7)) {
                                     $wrap.text(lang.uploadNoPreview);
                                 } else {
                                     var $img = $('<img src="' + src + '">');
@@ -274,7 +456,7 @@
                             }, thumbnailWidth, thumbnailHeight);
                         }
                     }
-                    percentages[ file.id ] = [ file.size, 0 ];
+                    percentages[file.id] = [file.size, 0];
                     file.rotation = 0;
 
                     /* 检查文件格式 */
@@ -294,11 +476,11 @@
                     // 成功
                     if (cur === 'error' || cur === 'invalid') {
                         showError(file.statusText);
-                        percentages[ file.id ][ 1 ] = 1;
+                        percentages[file.id][1] = 1;
                     } else if (cur === 'interrupt') {
                         showError('interrupt');
                     } else if (cur === 'queued') {
-                        percentages[ file.id ][ 1 ] = 0;
+                        percentages[file.id][1] = 0;
                     } else if (cur === 'progress') {
                         $info.hide();
                         $prgress.css('display', 'block');
@@ -351,7 +533,7 @@
             // 负责view的销毁
             function removeFile(file) {
                 var $li = $('#' + file.id);
-                delete percentages[ file.id ];
+                delete percentages[file.id];
                 updateTotalProgress();
                 $li.off().find('.file-panel').off().end().remove();
             }
@@ -363,8 +545,8 @@
                     percent;
 
                 $.each(percentages, function (k, v) {
-                    total += v[ 0 ];
-                    loaded += v[ 0 ] * v[ 1 ];
+                    total += v[0];
+                    loaded += v[0] * v[1];
                 });
 
                 percent = total ? loaded / total : 0;
@@ -390,7 +572,8 @@
                             $queue.addClass('element-invisible');
                             $statusBar.addClass('element-invisible');
                             $placeHolder.removeClass('element-invisible');
-                            $progress.hide(); $info.hide();
+                            $progress.hide();
+                            $info.hide();
                             uploader.refresh();
                             break;
 
@@ -399,25 +582,29 @@
                             $placeHolder.addClass('element-invisible');
                             $queue.removeClass('element-invisible');
                             $statusBar.removeClass('element-invisible');
-                            $progress.hide(); $info.show();
+                            $progress.hide();
+                            $info.show();
                             $upload.text(lang.uploadStart);
                             uploader.refresh();
                             break;
 
                         /* 上传中 */
                         case 'uploading':
-                            $progress.show(); $info.hide();
+                            $progress.show();
+                            $info.hide();
                             $upload.text(lang.uploadPause);
                             break;
 
                         /* 暂停上传 */
                         case 'paused':
-                            $progress.show(); $info.hide();
+                            $progress.show();
+                            $info.hide();
                             $upload.text(lang.uploadContinue);
                             break;
 
                         case 'confirm':
-                            $progress.show(); $info.hide();
+                            $progress.show();
+                            $info.hide();
                             $upload.text(lang.uploadStart);
 
                             stats = uploader.getStats();
@@ -428,7 +615,8 @@
                             break;
 
                         case 'finish':
-                            $progress.hide(); $info.show();
+                            $progress.hide();
+                            $info.show();
                             if (stats.uploadFailNum) {
                                 $upload.text(lang.uploadRetry);
                             } else {
@@ -462,9 +650,7 @@
                     }
                 } else {
                     stats = uploader.getStats();
-                    text = lang.updateStatusFinish.replace('_', fileCount).
-                        replace('_KB', WebUploader.formatSize(fileSize)).
-                        replace('_', stats.successNum);
+                    text = lang.updateStatusFinish.replace('_', fileCount).replace('_KB', WebUploader.formatSize(fileSize)).replace('_', stats.successNum);
 
                     if (stats.uploadFailNum) {
                         text += lang.updateStatusError.replace('_', stats.uploadFailNum);
@@ -510,7 +696,7 @@
                         /* 添加额外的GET参数 */
                         if (uploadType == 'local' || isDirect == 'php') {
                             var params = utils.serializeParam(editor.queryCommandValue('serverparam')) || '',
-                            url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?':'&') + 'encode=utf-8&' + params);
+                                url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?' : '&') + 'encode=utf-8&' + params);
                             uploader.option('server', url);
                         } else {
                             uploader.option('server', uploadUrl);
@@ -527,13 +713,13 @@
                 //这里可以通过data对象添加POST参数
                 header['X-Requested-With'] = 'XMLHttpRequest';
                 // 如果是qiniu上传并且不通过php上传就通过ajax来获取token
-                if( uploadType == 'qiniu' &&  isDirect != 'php'  ){
+                if (uploadType == 'qiniu' && isDirect != 'php') {
                     var $file = $('#' + file.id),
-                        type  = editor.getOpt('uploadSaveType'),
-                        path  = editor.getOpt('filePathFormat');
+                        type = editor.getOpt('uploadSaveType'),
+                        path = editor.getOpt('audioPathFormat');
 
                     //生成一个随机数目，防止批量上传的时候文件名同名出错
-                    var randNumber = (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+                    var randNumber = (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
                     var now = new Date();
                     // 替换path
                     path = path.replace(/\{yyyy\}/, now.getFullYear());
@@ -547,35 +733,35 @@
                     var reg = path.match(/\{rand\:([\d]*)\}/i);
                     if (reg) {
                         var code = '';
-                        for(var i = 1;i <= reg[1];i++){
-                            const num = Math.floor(Math.random()*10);
+                        for (var i = 1; i <= reg[1]; i++) {
+                            const num = Math.floor(Math.random() * 10);
                             code += num;
                         }
                         path = path.replace(reg[0], code);
                     }
 
                     var filename = '';
-                    if( type == 'date' ){
+                    if (type == 'date') {
                         filename = Date.parse(now) + randNumber + "." + file.file.ext;
-                    }else{
+                    } else {
                         filename = file.file.name;
                     }
                     filename = path + '/' + filename;
                     data['key'] = filename;
 
-                    var token ="";
+                    var token = "";
                     var url = editor.getActionUrl(editor.getOpt('getTokenActionName')),
                         isJsonp = utils.isCrossDomainUrl(url);
                     $.ajax({
-                        dataType : isJsonp ? 'jsonp':'json',
-                        async    : false,
-                        method   : 'post',
-                        data     : {"key":filename},
-                        url      : url,
-                        success:function(data) {
-                            if( data.state == 'SUCCESS' ){
+                        dataType: isJsonp ? 'jsonp' : 'json',
+                        async: false,
+                        method: 'post',
+                        data: {"key": filename},
+                        url: url,
+                        success: function (data) {
+                            if (data.state == 'SUCCESS') {
                                 token = data.token;
-                            }else{
+                            } else {
                                 $file.find('.error').text(data.error).show();
                             }
                         }
@@ -590,17 +776,17 @@
                     $percent = $li.find('.progress span');
 
                 $percent.css('width', percentage * 100 + '%');
-                percentages[ file.id ][ 1 ] = percentage;
+                percentages[file.id][1] = percentage;
                 updateTotalProgress();
             });
 
             uploader.on('uploadSuccess', function (file, ret) {
                 var $file = $('#' + file.id);
                 try {
-                    var url = editor.getActionUrl(editor.getOpt('recordActionName')),
-                        isJsonp = utils.isCrossDomainUrl(url);
                     var responseText = (ret._raw || ret),
                         json = utils.str2json(responseText);
+                    var url = editor.getActionUrl(editor.getOpt('recordActionName')),
+                        isJsonp = utils.isCrossDomainUrl(url);
                     $.ajax({
                         dataType: isJsonp ? 'jsonp' : 'json',
                         async: false,
@@ -618,8 +804,9 @@
                             json = data;
                         }
                     });
+
                     if (json.state == 'SUCCESS') {
-                        _this.fileList.push(json);
+                        _this.audioList.push(json);
                         $file.append('<span class="success"></span>');
                     } else {
                         $file.find('.error').text(json.state).show();
@@ -658,21 +845,27 @@
         },
         getQueueCount: function () {
             var file, i, status, readyFile = 0, files = this.uploader.getFiles();
-            for (i = 0; file = files[i++]; ) {
+            for (i = 0; file = files[i++];) {
                 status = file.getStatus();
                 if (status == 'queued' || status == 'uploading' || status == 'progress') readyFile++;
             }
             return readyFile;
         },
+        destroy: function () {
+            this.$wrap.remove();
+        },
         getInsertList: function () {
-            var i, link, data, list = [],
-                prefix = editor.getOpt('fileUrlPrefix');
-            for (i = 0; i < this.fileList.length; i++) {
-                data = this.fileList[i];
-                link = data.url;
+            var i, data, list = [],
+                align = getAlign(),
+                prefix = editor.getOpt('audioUrlPrefix');
+            for (i = 0; i < this.audioList.length; i++) {
+                data = this.audioList[i];
                 list.push({
-                    title: data.original || link.substr(link.lastIndexOf('/') + 1),
-                    url: prefix + link
+                    src: prefix + data.url,
+                    _src: prefix + data.url,
+                    title: data.title,
+                    alt: data.original,
+                    floatStyle: align
                 });
             }
             return list;
@@ -680,16 +873,16 @@
     };
 
 
-    /* 在线附件 */
-    function OnlineFile(target) {
+    /* 在线音频 */
+    function OnlineAudio(target) {
         this.container = utils.isString(target) ? document.getElementById(target) : target;
         this.init();
     }
-    OnlineFile.prototype = {
+
+    OnlineAudio.prototype = {
         init: function () {
-            this.initContainer();
+            this.reset();
             this.initEvents();
-            this.initData();
         },
         /* 初始化容器 */
         initContainer: function () {
@@ -707,15 +900,15 @@
         initEvents: function () {
             var _this = this;
 
-            /* 滚动拉取图片 */
-            domUtils.on($G('fileList'), 'scroll', function(e){
+            /* 滚动拉取音频 */
+            domUtils.on($G('audioList'), 'scroll', function (e) {
                 var panel = this;
                 if (panel.scrollHeight - (panel.offsetHeight + panel.scrollTop) < 10) {
-                    _this.getFileData();
+                    _this.getAudioData();
                 }
             });
-            /* 选中图片 */
-            domUtils.on(this.list, 'click', function (e) {
+            /* 选中音频 */
+            domUtils.on(this.container, 'click', function (e) {
                 var target = e.target || e.srcElement,
                     li = target.parentNode;
 
@@ -733,47 +926,53 @@
 
             /* 拉取数据需要使用的值 */
             this.state = 0;
-            this.listSize = editor.getOpt('fileManagerListSize');
+            this.listSize = editor.getOpt('audioManagerListSize');
             this.listIndex = 0;
             this.listEnd = false;
-            // 添加marker
+            // 添加market
             this.marker = '';
 
-
             /* 第一次拉取数据 */
-            this.getFileData();
+            this.getAudioData();
         },
-        /* 向后台拉取图片列表数据 */
-        getFileData: function () {
+        /* 重置界面 */
+        reset: function () {
+            this.initContainer();
+            this.initData();
+        },
+        /* 向后台拉取音频列表数据 */
+        getAudioData: function () {
             var _this = this;
 
-            if(!_this.listEnd && !this.isLoadingData) {
+            if (!_this.listEnd && !this.isLoadingData) {
                 this.isLoadingData = true;
-                ajax.request(editor.getActionUrl(editor.getOpt('fileManagerActionName')), {
-                    timeout: 100000,
-                    data: utils.extend({
-                            start: this.listIndex,
-                            size: this.listSize,
-                            marker : this.marker
-                        }, editor.queryCommandValue('serverparam')),
-                    method: 'get',
-                    onsuccess: function (r) {
-                        
+                var url = editor.getActionUrl(editor.getOpt('audioManagerActionName')),
+                    isJsonp = utils.isCrossDomainUrl(url);
+                ajax.request(url, {
+                    'timeout': 100000,
+                    'dataType': isJsonp ? 'jsonp' : '',
+                    'data': utils.extend({
+                        start: this.listIndex,
+                        size: this.listSize,
+                        marker: this.marker,
+                    }, editor.queryCommandValue('serverparam')),
+                    'method': 'get',
+                    'onsuccess': function (r) {
                         try {
-                            var json = eval('(' + r.responseText + ')');
+                            var json = isJsonp ? r : eval('(' + r.responseText + ')');
                             if (json.state == 'SUCCESS') {
                                 _this.pushData(json.list);
                                 /* */
                                 _this.marker = json.marker;
                                 /* end */
                                 _this.listIndex = parseInt(json.start) + parseInt(json.list.length);
-                                if(_this.listIndex >= json.total) {
+                                if (_this.listIndex >= json.total) {
                                     _this.listEnd = true;
                                 }
                                 _this.isLoadingData = false;
                             }
                         } catch (e) {
-                            if(r.responseText.indexOf('ue_separate_ue') != -1) {
+                            if (r.responseText.indexOf('ue_separate_ue') != -1) {
                                 var list = r.responseText.split(r.responseText);
                                 _this.pushData(list);
                                 _this.listIndex = parseInt(list.length);
@@ -782,17 +981,16 @@
                             }
                         }
                     },
-                    onerror: function () {
+                    'onerror': function () {
                         _this.isLoadingData = false;
                     }
                 });
             }
         },
-        /* 添加图片到列表界面上 */
+        /* 添加音频到列表界面上 */
         pushData: function (list) {
-            var i, item, img, filetype, preview, icon, _this = this,
-                urlPrefix = editor.getOpt('fileManagerUrlPrefix');
-
+            var i, item, img, icon, _this = this,
+                urlPrefix = editor.getOpt('audioManagerUrlPrefix');
             for (i = 0; i < list.length; i++) {
                 if(list[i] && list[i].url) {
                     item = document.createElement('li');
@@ -839,11 +1037,12 @@
 
                     domUtils.on(cancel_span, 'click',function(){
                         var key = this.getAttribute('data-key');
-                        return _this.removeImage(key,this);
+                        return _this.removeAudio(key,this);
                     });
                     // end
 
                     item.setAttribute('data-url', urlPrefix + list[i].url);
+                    item.setAttribute('data-title', list[i].name);
                     if (list[i].original) {
                         item.setAttribute('data-title', list[i].original);
                     }
@@ -856,55 +1055,60 @@
                 }
             }
         },
-        /* 改变图片大小 */
-        scale: function (img, w, h, type) {
-            var ow = img.width,
-                oh = img.height;
+        /* 改变音频大小 */
+        scale: function (audio, w, h, type) {
+            var ow = audio.width,
+                oh = audio.height;
 
             if (type == 'justify') {
                 if (ow >= oh) {
-                    img.width = w;
-                    img.height = h * oh / ow;
-                    img.style.marginLeft = '-' + parseInt((img.width - w) / 2) + 'px';
+                    audio.width = w;
+                    audio.height = h * oh / ow;
+                    audio.style.marginLeft = '-' + parseInt((audio.width - w) / 2) + 'px';
                 } else {
-                    img.width = w * ow / oh;
-                    img.height = h;
-                    img.style.marginTop = '-' + parseInt((img.height - h) / 2) + 'px';
+                    audio.width = w * ow / oh;
+                    audio.height = h;
+                    audio.style.marginTop = '-' + parseInt((audio.height - h) / 2) + 'px';
                 }
             } else {
                 if (ow >= oh) {
-                    img.width = w * ow / oh;
-                    img.height = h;
-                    img.style.marginLeft = '-' + parseInt((img.width - w) / 2) + 'px';
+                    audio.width = w * ow / oh;
+                    audio.height = h;
+                    audio.style.marginLeft = '-' + parseInt((audio.width - w) / 2) + 'px';
                 } else {
-                    img.width = w;
-                    img.height = h * oh / ow;
-                    img.style.marginTop = '-' + parseInt((img.height - h) / 2) + 'px';
+                    audio.width = w;
+                    audio.height = h * oh / ow;
+                    audio.style.marginTop = '-' + parseInt((audio.height - h) / 2) + 'px';
                 }
             }
         },
         getInsertList: function () {
-            var i, lis = this.list.children, list = [];
+            var i, lis = this.list.children, list = [], align = getAlign();
             for (i = 0; i < lis.length; i++) {
                 if (domUtils.hasClass(lis[i], 'selected')) {
-                    var url = lis[i].getAttribute('data-url');
-                    var title = lis[i].getAttribute('data-title') || url.substr(url.lastIndexOf('/') + 1);
+                    var audio = lis[i],
+                        title = audio.getAttribute('data-title'),
+                        src = audio.getAttribute('data-url');
                     list.push({
+                        src: src,
+                        _src: src,
                         title: title,
-                        url: url
+                        alt: title,
+                        floatStyle: align
                     });
                 }
+
             }
             return list;
         },
-        // 删除图片的方法
-        removeImage:function(key,obj){
-            var url = editor.getActionUrl(editor.getOpt('removeImageActionName')),
-                id = this.getAttribute('data-key'),
+        // 删除音频的方法
+        removeAudio: function (key, obj) {
+            var url = editor.getActionUrl(editor.getOpt('removeAudioActionName')),
+                id = obj.getAttribute('data-id');
                 isJsonp = utils.isCrossDomainUrl(url);
             ajax.request(url, {
                 'timeout': 100000,
-                'dataType': isJsonp ? 'jsonp':'',
+                'dataType': isJsonp ? 'jsonp' : '',
                 'data': utils.extend({
                     id: id,
                     key: key,
@@ -912,18 +1116,21 @@
                 'method': 'post',
                 'onsuccess': function (r) {
                     try {
-                        var json = isJsonp ? r:eval('(' + r.responseText + ')');
+                        var json = isJsonp ? r : eval('(' + r.responseText + ')');
                         if (json.state == 'SUCCESS') {
-                           $(obj).parent().parent().remove();
-                        }else{
-                           $(obj).parent().addClass("custom_error").html(json.state);
+                            $(obj).parent().parent().remove();
+                        } else {
+                            $(obj).parent().addClass("custom_error").html(json.state);
                         }
-                    }catch(e){ console.log(e)}
+                    } catch (e) {
+                        console.log(e)
+                    }
                 },
-                'onerror': function (e){console.log(e)}
+                'onerror': function (e) {
+                    console.log(e)
+                }
             });
         }
     };
-
 
 })();

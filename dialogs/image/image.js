@@ -10,27 +10,26 @@
     var remoteImage,
         uploadImage,
         onlineImage,
-        // widuu 添加上传判断参数
+        // 添加上传判断参数
         uploadType,
         uploadUrl,
         isDirect,
-        // end widuu
+        // end
         searchImage;
 
     window.onload = function () {
         initTabs();
         initAlign();
         initButtons();
-        // widuu 初始化配置
+        // 初始化配置
         initUploadType();
     };
     
-    /* widuu初始化上传参数 */
+    /*初始化上传参数 */
     function initUploadType(){
         uploadType = editor.getOpt('uploadType');
         isDirect   = editor.getOpt('qiniuUploadType');
         if( uploadType == 'local' || isDirect == 'php' ){
-
             var params = utils.serializeParam(editor.queryCommandValue('serverparam')) || '',
                 actionUrl = editor.getActionUrl(editor.getOpt('imageActionName')),
                 url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?':'&') + 'encode=utf-8&' + params);
@@ -59,7 +58,7 @@
         }
     }
 
-    /* widuu 格式化日期方法 */
+    /* 格式化日期方法 */
     Date.prototype.Format = function (fmt) { 
         var o = {
             "m+": this.getMonth() + 1,
@@ -70,7 +69,7 @@
         if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
         return fmt;
     }
-    /* end widuu */
+    /* end */
 
     /* 初始化tabbody */
     function setTabFocus(id) {
@@ -726,12 +725,13 @@
                         break;
                     case 'startUpload':
                         /* 添加额外的GET参数 */
-                        //var params = utils.serializeParam(editor.queryCommandValue('serverparam')) || '',
-                         //   url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?':'&') + 'encode=utf-8&' + params);
-                        // widuu 
-                        //uploader.option('server', url);
-                        uploader.option('server', uploadUrl);
-                        // end widuu
+                        if (uploadType == 'local' || isDirect == 'php') {
+                            var params = utils.serializeParam(editor.queryCommandValue('serverparam')) || '',
+                                url = utils.formatUrl(actionUrl + (actionUrl.indexOf('?') == -1 ? '?' : '&') + 'encode=utf-8&' + params);
+                            uploader.option('server', url);
+                        } else {
+                            uploader.option('server', uploadUrl);
+                        }
                         setState('uploading', files);
                         break;
                     case 'stopUpload':
@@ -742,29 +742,44 @@
 
             uploader.on('uploadBeforeSend', function (file, data, header) {
                 //这里可以通过data对象添加POST参数
-                header['X_Requested_With'] = 'XMLHttpRequest';
-                // widuu 如果是qiniu上传并且不通过php上传就通过ajax来获取token
+                header['X-Requested-With'] = 'XMLHttpRequest';
+                // 如果是qiniu上传并且不通过php上传就通过ajax来获取token
                 if( uploadType == 'qiniu' &&  isDirect != 'php'  ){
                     var $file = $('#' + file.id),
                         type  = editor.getOpt('uploadSaveType'),
-                        path  = editor.getOpt('qiniuUploadPath'),
-                        time  = editor.getOpt('qiniuDatePath');
+                        path  = editor.getOpt('imagePathFormat');
 
                     //生成一个随机数目，防止批量上传的时候文件名同名出错
                     var randNumber = (((1+Math.random())*0x10000)|0).toString(16).substring(1);
                     var now = new Date();
-                    var filename = '';
-                    if( type == 'date' ){
-                        if( time != '' ){
-                            filename = path + new Date().Format(time) + '/'+ Date.parse(now)+randNumber+"."+file.file.ext;
-                        }else{
-                            filename = path + '/'+ Date.parse(now)+randNumber+"."+file.file.ext;
+                    // 替换path
+                    path = path.replace(/\{yyyy\}/, now.getFullYear());
+                    path = path.replace(/\{mm\}/, (Array(2).join(0) + (now.getMonth() + 1)).slice(-2));
+                    path = path.replace(/\{dd\}/, (Array(2).join(0) + now.getDate()).slice(-2));
+                    path = path.replace(/\{hh\}/, (Array(2).join(0) + now.getHours()).slice(-2));
+                    path = path.replace(/\{ii\}/, (Array(2).join(0) + now.getMinutes()).slice(-2));
+                    path = path.replace(/\{ss\}/, (Array(2).join(0) + now.getSeconds()).slice(-2));
+                    path = path.replace(/\{time\}/, Date.parse(now));
+                    // 匹配随机数
+                    var reg = path.match(/\{rand\:([\d]*)\}/i);
+                    if (reg) {
+                        var code = '';
+                        for(var i = 1;i <= reg[1];i++){
+                            const num = Math.floor(Math.random()*10);
+                            code += num;
                         }
-                        data['key'] = filename;
-                    }else{
-                        filename = path + file.file.name;
-                        data['key'] = filename;
+                        path = path.replace(reg[0], code);
                     }
+
+                    var filename = '';
+                    if (type == 'date') {
+                        filename = Date.parse(now) + randNumber + "." + file.file.ext;
+                    } else {
+                        filename = file.file.name;
+                    }
+                    filename = path + '/' + filename;
+                    data['key'] = filename;
+
                     var token ="";
                      var url = editor.getActionUrl(editor.getOpt('getTokenActionName')),
                         isJsonp = utils.isCrossDomainUrl(url);
@@ -784,7 +799,7 @@
                     });
                     data['token'] = token;
                 }
-                // end widuu
+                // end
             });
 
             uploader.on('uploadProgress', function (file, percentage) {
@@ -801,6 +816,26 @@
                 try {
                     var responseText = (ret._raw || ret),
                         json = utils.str2json(responseText);
+                    var url = editor.getActionUrl(editor.getOpt('recordActionName')),
+                        isJsonp = utils.isCrossDomainUrl(url);
+                    $.ajax({
+                        dataType: isJsonp ? 'jsonp' : 'json',
+                        async: false,
+                        method: 'post',
+                        data: {
+                            key: json.key,
+                            type: file.type,
+                            size: file.size,
+                            name: file.name,
+                            ext: file.ext,
+                            hash: json.hash
+                        },
+                        url: url,
+                        success: function (data) {
+                            json = data;
+                        }
+                    });
+
                     if (json.state == 'SUCCESS') {
                         _this.imageList.push(json);
                         $file.append('<span class="success"></span>');
@@ -924,7 +959,7 @@
             this.listSize = editor.getOpt('imageManagerListSize');
             this.listIndex = 0;
             this.listEnd = false;
-            // widuu 添加market
+            // 添加market
             this.marker = '';
 
             /* 第一次拉取数据 */
@@ -957,9 +992,9 @@
                             var json = isJsonp ? r:eval('(' + r.responseText + ')');
                             if (json.state == 'SUCCESS') {
                                 _this.pushData(json.list);
-                                 /* widuu */
+                                 /* */
                                 _this.marker = json.marker;
-                                /* end widuu */
+                                /* end */
                                 _this.listIndex = parseInt(json.start) + parseInt(json.list.length);
                                 if(_this.listIndex >= json.total) {
                                     _this.listEnd = true;
@@ -991,11 +1026,14 @@
                     item = document.createElement('li');
                     img = document.createElement('img');
                     icon = document.createElement('span');
-                    // widuu
+                    //
                     div = document.createElement('div');
                     domUtils.addClass(div,'file-panel');
                     cancel_span = document.createElement('span');
                     domUtils.addClass(cancel_span,'cancel');
+                    if( list[i].id ){
+                        cancel_span.setAttribute("data-id",list[i].id);
+                    }
                     if( !list[i].key ){
                         cancel_span.setAttribute("data-key",list[i].url);
                     }else{
@@ -1007,7 +1045,7 @@
                         var key = this.getAttribute('data-key');
                         return _this.removeImage(key,this);
                     });
-                    // end widuu
+                    // end
 
                     domUtils.on(img, 'load', (function(image){
                         return function(){
@@ -1021,9 +1059,9 @@
 
                     item.appendChild(img);
                     item.appendChild(icon);
-                    // widuu
+                    //
                     item.appendChild(div);
-                    // end widuu
+                    // end
                     this.list.insertBefore(item, this.clearFloat);
                 }
             }
@@ -1072,16 +1110,18 @@
             }
             return list;
         },
-        // widuu 删除图片的方法
+        // 删除图片的方法
         removeImage:function(key,obj){
             var url = editor.getActionUrl(editor.getOpt('removeImageActionName')),
-                    isJsonp = utils.isCrossDomainUrl(url);
+                id = obj.getAttribute('data-id'),
+                isJsonp = utils.isCrossDomainUrl(url);
             ajax.request(url, {
                 'timeout': 100000,
                 'dataType': isJsonp ? 'jsonp':'',
                 'data': utils.extend({
-                        key: key,
-                    }, editor.queryCommandValue('serverparam')),
+                    id: id,
+                    key: key,
+                }, editor.queryCommandValue('serverparam')),
                 'method': 'post',
                 'onsuccess': function (r) {
                     try {

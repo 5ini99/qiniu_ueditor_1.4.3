@@ -157,7 +157,7 @@
     clear: both;
 }
 
-/*widuu*/
+/*custom*/
 #fileList .selected div.file-panel {
     position: absolute;
     height: 30px;
@@ -203,7 +203,7 @@
     color: #ffffff;
 }
 
-/*end widuu*/
+/*end*/
 
 #upload .filelist li {
     width: 113px;
@@ -533,7 +533,7 @@
 
 
 
-/* 图片管理样式 */
+/* 附件管理样式 */
 #online {
     width: 100%;
     height: 336px;
@@ -592,7 +592,7 @@
     padding: 0 3px;
     margin: 3px 0 0 0;
     font-size: 12px;
-    height: 13px;
+    height: 16px;
     color: #555555;
     text-align: center;
     width: 107px;

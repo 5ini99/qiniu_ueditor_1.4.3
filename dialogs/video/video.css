@@ -1,6 +1,15 @@
 @charset "utf-8";
-.wrapper{ width: 570px;_width:575px;margin: 10px auto; zoom:1;position: relative}
-.tabbody{height: 335px;}
+.wrapper {
+    zoom: 1;
+    width: 630px;
+    *width: 626px;
+    height: 380px;
+    margin: 0 auto;
+    padding: 10px;
+    position: relative;
+    font-family: sans-serif;
+}
+.tabbody{height: 346px;}
 .tabbody .panel {
     position: absolute;
     width: 0;
@@ -11,13 +20,13 @@
 }
 .tabbody .panel.focus {
     width: 100%;
-    height: 335px;
+    height: 346px;
     display: block;
 }
 
 .tabbody .panel table td{vertical-align: middle;}
 #videoUrl {
-    width: 490px;
+    width: 555px;
     height: 21px;
     line-height: 21px;
     margin: 8px 5px;
@@ -47,7 +56,7 @@
 
 
 
-#preview{position: relative;width: 420px;padding:0;overflow: hidden; margin-left: 10px; _margin-left:5px; height: 280px;background-color: #ddd;float: left}
+#preview{position: relative;width: 475px;padding:0;overflow: hidden; margin-left: 10px; _margin-left:5px; height: 295px;background-color: #ddd;float: left}
 #preview .previewMsg {position:absolute;top:0;margin:0;padding:0;height:280px;width:100%;background-color: #666;}
 #preview .previewMsg span{display:block;margin: 125px auto 0 auto;text-align:center;font-size:18px;color:#fff;}
 #preview .previewVideo {position:absolute;top:0;margin:0;padding:0;height:280px;width:100%;}
@@ -103,7 +112,7 @@ span.view{display: inline-block;width: 30px;float: right;cursor: pointer;color: 
 }
 #upload_alignment div{cursor:pointer;opacity: 0.5;filter: alpha(opacity = 50);margin:9px;_margin:5px;width:38px;height:36px;float:left;}
 #upload_alignment .focus{opacity: 1;filter: alpha(opacity = 100)}
-#upload_left { width:427px; float:left; }
+#upload_left { width:490px; float:left; }
 #upload_left .controller { height: 30px; clear: both; }
 #uploadVideoInfo{margin-top:10px;float:right;padding-right:8px;}
 
@@ -335,6 +344,22 @@ span.view{display: inline-block;width: 30px;float: right;cursor: pointer;color: 
     margin-top: 15px;
 }
 
+#upload .filelist span.file-title{
+    display: block;
+    padding: 0 3px;
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    height: 16px;
+    line-height: 16px;
+    color: #555555;
+    text-align: center;
+    width: 107px;
+    white-space: nowrap;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 #upload .filelist li img {
     width: 100%;
 }
@@ -535,6 +560,146 @@ span.view{display: inline-block;width: 30px;float: right;cursor: pointer;color: 
     opacity: 0.6;
 }
 
+/* 视频管理样式 */
+#online {
+    width: 100%;
+    height: 336px;
+    padding: 10px 0 0 0;
+}
+#online #audioList{
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+}
+#online ul {
+    display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#online li {
+    float: left;
+    display: block;
+    list-style: none;
+    padding: 0;
+    width: 113px;
+    height: 113px;
+    margin: 0 0 9px 9px;
+    *margin: 0 0 6px 6px;
+    background-color: #eee;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+#online li.clearFloat {
+    float: none;
+    clear: both;
+    display: block;
+    width:0;
+    height:0;
+    margin: 0;
+    padding: 0;
+}
+#online li img {
+    cursor: pointer;
+}
+#online li div.file-wrapper {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    width: 111px;
+    height: 111px;
+    border: 1px solid #eee;
+    background: url("./images/bg.png") repeat;
+}
+#online li div span.file-title{
+    display: block;
+    padding: 0 3px;
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    height: 16px;
+    color: #555555;
+    text-align: center;
+    width: 107px;
+    white-space: nowrap;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#online li .icon {
+    cursor: pointer;
+    width: 113px;
+    height: 113px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    border: 0;
+    background-repeat: no-repeat;
+}
+#online li .icon:hover {
+    width: 107px;
+    height: 107px;
+    border: 3px solid #1094fa;
+}
+#online li.selected .icon {
+    background-image: url(images/success.png);
+    background-image: url(images/success.gif) \9;
+    background-position: 75px 75px;
+}
+#online li.selected .icon:hover {
+    width: 107px;
+    height: 107px;
+    border: 3px solid #1094fa;
+    background-position: 72px 72px;
+}
+
+#audioList .selected div.file-panel {
+    position: absolute;
+    height: 30px;
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#80000000', endColorstr='#80000000') \0;
+    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: 300;
+}
+
+#audioList .selected div.file-panel span {
+    width: 24px;
+    height: 24px;
+    display: inline;
+    float: right;
+    text-indent: -9999px;
+    overflow: hidden;
+    background: url(./images/icons.png) no-repeat;
+    background: url(./images/icons.gif) no-repeat \9;
+    margin: 5px 1px 1px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#audioList .list div.file-panel span.cancel {
+    background-position: -48px -24px;
+}
+
+#audioList .list div.file-panel span.cancel:hover {
+    background-position: -48px 0;
+}
+
+.custom_error{
+    background: #f43838!important;
+    text-align: center;
+    line-height: 30px;
+    color: #ffffff;
+}
 
 /* 在线文件的文件预览图标 */
 i.file-preview {

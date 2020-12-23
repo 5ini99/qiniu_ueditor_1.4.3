@@ -106,13 +106,13 @@
 #remote .left{
     display: block;
     float: left;
-    width: 300px;
+    width: 235px;
     height:10px;
 }
 #remote .right{
     display: block;
     float: right;
-    width: 300px;
+    width: 360px;
     height:10px;
 }
 #remote .row{
@@ -166,9 +166,12 @@
     margin-right: 2px;
 }
 #remote #border,
-#remote #vhSpace,
+#remote #vhSpace{
+    width: 126px;
+    margin-right: 5px;
+}
 #remote #title{
-    width: 180px;
+    width: 500px;
     margin-right: 5px;
 }
 #remote #lock{
@@ -184,10 +187,12 @@
 }
 #remote #preview{
     clear: both;
-    width: 260px;
-    height: 240px;
+    width: 320px;
+    height: 180px;
     z-index: 9999;
     margin-top: 10px;
+    text-align: center;
+    padding-top: 20px;
     background-color: #eee;
     overflow: hidden;
 }
@@ -240,7 +245,7 @@
     height: 172px;
     padding-top: 150px;
     text-align: center;
-    background: url(./images/image.png) center 70px no-repeat;
+    background: url(./images/audio.png) center 70px no-repeat;
     color: #cccccc;
     font-size: 18px;
     position: relative;
@@ -293,7 +298,7 @@
     border-color: #999999;
 }
 
-#upload .filelist {
+#upload .audioList {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -303,7 +308,7 @@
     height: 300px;
 }
 
-#upload .filelist:after {
+#upload .audioList:after {
     content: '';
     display: block;
     width: 0;
@@ -313,7 +318,7 @@
     position: relative;
 }
 
-#upload .filelist li {
+#upload .audioList li {
     width: 113px;
     height: 113px;
     background: url(./images/bg.png);
@@ -327,25 +332,28 @@
     font-size: 12px;
 }
 
-#upload .filelist li p.log {
+#upload .audioList span.file-title{
+    display: block;
+    padding: 0 3px;
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    height: 16px;
+    line-height: 16px;
+    color: #555555;
+    text-align: center;
+    width: 107px;
+    white-space: nowrap;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#upload .audioList li p.log {
     position: relative;
     top: -45px;
 }
 
-#upload .filelist li p.title {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    top: 5px;
-    text-indent: 5px;
-    text-align: left;
-}
-
-#upload .filelist li p.progress {
+#upload .audioList li p.progress {
     position: absolute;
     width: 100%;
     bottom: 0;
@@ -359,7 +367,7 @@
     -webkit-box-shadow: 0 0 0;
 }
 
-#upload .filelist li p.progress span {
+#upload .audioList li p.progress span {
     display: none;
     overflow: hidden;
     width: 0;
@@ -408,7 +416,7 @@
     }
 }
 
-#upload .filelist li p.imgWrap {
+#upload .audioList li p.imgWrap {
     position: relative;
     z-index: 2;
     line-height: 113px;
@@ -430,11 +438,11 @@
     transition: 200ms ease-out;
 }
 
-#upload .filelist li img {
+#upload .audioList li img {
     width: 100%;
 }
 
-#upload .filelist li p.error {
+#upload .audioList li p.error {
     background: #f43838;
     color: #fff;
     position: absolute;
@@ -447,7 +455,7 @@
     display:none;
 }
 
-#upload .filelist li .success {
+#upload .audioList li .success {
     display: block;
     position: absolute;
     left: 0;
@@ -459,14 +467,15 @@
     background: url(./images/success.gif) no-repeat right bottom \9;
 }
 
-#upload .filelist li.filePickerBlock {
+#upload .audioList li.filePickerBlock {
     width: 113px;
     height: 113px;
-    background: url(./images/image.png) no-repeat center 12px;
+    background: url(./images/audio.png) no-repeat center 12px;
+    background-position: center;
     border: 1px solid #eeeeee;
     border-radius: 0;
 }
-#upload .filelist li.filePickerBlock div.webuploader-pick  {
+#upload .audioList li.filePickerBlock div.webuploader-pick  {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -476,7 +485,7 @@
     font-size: 0;
 }
 
-#upload .filelist div.file-panel {
+#upload .audioList div.file-panel {
     position: absolute;
     height: 0;
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#80000000', endColorstr='#80000000') \0;
@@ -488,7 +497,7 @@
     z-index: 300;
 }
 
-#upload .filelist div.file-panel span {
+#upload .audioList div.file-panel span {
     width: 24px;
     height: 24px;
     display: inline;
@@ -506,29 +515,29 @@
     user-select: none;
 }
 
-#upload .filelist div.file-panel span.rotateLeft {
+#upload .audioList div.file-panel span.rotateLeft {
     display:none;
     background-position: 0 -24px;
 }
 
-#upload .filelist div.file-panel span.rotateLeft:hover {
+#upload .audioList div.file-panel span.rotateLeft:hover {
     background-position: 0 0;
 }
 
-#upload .filelist div.file-panel span.rotateRight {
+#upload .audioList div.file-panel span.rotateRight {
     display:none;
     background-position: -24px -24px;
 }
 
-#upload .filelist div.file-panel span.rotateRight:hover {
+#upload .audioList div.file-panel span.rotateRight:hover {
     background-position: -24px 0;
 }
 
-#upload .filelist div.file-panel span.cancel {
+#upload .audioList div.file-panel span.cancel {
     background-position: -48px -24px;
 }
 
-#upload .filelist div.file-panel span.cancel:hover {
+#upload .audioList div.file-panel span.cancel:hover {
     background-position: -48px 0;
 }
 
@@ -582,7 +591,7 @@
 }
 
 /*custom*/
-#imageList .selected div.file-panel {
+#audioList .selected div.file-panel {
     position: absolute;
     height: 30px;
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#80000000', endColorstr='#80000000') \0;
@@ -594,7 +603,7 @@
     z-index: 300;
 }
 
-#imageList .selected div.file-panel span {
+#audioList .selected div.file-panel span {
     width: 24px;
     height: 24px;
     display: inline;
@@ -612,11 +621,11 @@
     user-select: none;
 }
 
-#imageList .list div.file-panel span.cancel {
+#audioList .list div.file-panel span.cancel {
     background-position: -48px -24px;
 }
 
-#imageList .list div.file-panel span.cancel:hover {
+#audioList .list div.file-panel span.cancel:hover {
     background-position: -48px 0;
 }
 
@@ -679,13 +688,13 @@
 
 
 
-/* 图片管理样式 */
+/* 音频管理样式 */
 #online {
     width: 100%;
     height: 336px;
     padding: 10px 0 0 0;
 }
-#online #imageList{
+#online #audioList{
     width: 100%;
     height: 100%;
     overflow-x: hidden;
@@ -724,6 +733,29 @@
 #online li img {
     cursor: pointer;
 }
+#online li div.file-wrapper {
+    cursor: pointer;
+    position: absolute;
+    display: block;
+    width: 111px;
+    height: 111px;
+    border: 1px solid #eee;
+    background: url("./images/bg.png") repeat;
+}
+#online li div span.file-title{
+    display: block;
+    padding: 0 3px;
+    margin: 3px 0 0 0;
+    font-size: 12px;
+    height: 16px;
+    color: #555555;
+    text-align: center;
+    width: 107px;
+    white-space: nowrap;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 #online li .icon {
     cursor: pointer;
     width: 113px;
@@ -742,7 +774,7 @@
 }
 #online li.selected .icon {
     background-image: url(images/success.png);
-    background-image: url(images/success.gif)\9;
+    background-image: url(images/success.gif) \9;
     background-position: 75px 75px;
 }
 #online li.selected .icon:hover {
@@ -752,190 +784,35 @@
     background-position: 72px 72px;
 }
 
-
-/* 图片搜索样式 */
-#search .searchBar {
-    width: 100%;
-    height: 30px;
-    margin: 10px 0 5px 0;
-    padding: 0;
-}
-
-#search input.text{
-    width: 150px;
-    padding: 3px 6px;
-    font-size: 14px;
-    line-height: 1.42857143;
-    color: #555;
-    background-color: #fff;
-    background-image: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
-}
-#search input.text:focus {
-    border-color: #66afe9;
-    outline: 0;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
-}
-#search input.searchTxt {
-    margin-left:5px;
-    padding-left: 5px;
-    background: #FFF;
-    width: 300px;
-    *width: 260px;
-    height: 21px;
-    line-height: 21px;
-    float: left;
-    dislay: block;
-}
-
-#search .searchType {
-    width: 65px;
-    height: 28px;
-    padding:0;
-    line-height: 28px;
-    border: 1px solid #d7d7d7;
-    border-radius: 0;
-    vertical-align: top;
-    margin-left: 5px;
-    float: left;
-    dislay: block;
-}
-
-#search #searchBtn,
-#search #searchReset {
-    display: inline-block;
-    margin-bottom: 0;
-    margin-right: 5px;
-    padding: 4px 10px;
-    font-weight: 400;
-    text-align: center;
-    vertical-align: middle;
-    cursor: pointer;
-    background-image: none;
-    border: 1px solid transparent;
-    white-space: nowrap;
-    font-size: 14px;
-    border-radius: 4px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    vertical-align: top;
-    float: right;
-}
-
-#search #searchBtn {
-    color: white;
-    border-color: #285e8e;
-    background-color: #3b97d7;
-}
-#search #searchReset {
-    color: #333;
-    border-color: #ccc;
-    background-color: #fff;
-}
-#search #searchBtn:hover {
-    background-color: #3276b1;
-}
-#search #searchReset:hover {
-    background-color: #eee;
-}
-
-#search .msg {
-    margin-left: 5px;
-}
-
-#search .searchList{
-    width: 100%;
-    height: 300px;
-    overflow: hidden;
-    clear: both;
-}
-#search .searchList ul{
-    margin:0;
-    padding:0;
-    list-style:none;
-    clear: both;
-    width: 100%;
-    height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    zoom: 1;
-    position: relative;
-}
-
-#search .searchList li {
-    list-style:none;
-    float: left;
+/* 在线文件的文件预览图标 */
+i.file-preview {
     display: block;
-    width: 115px;
-    margin: 5px 10px 5px 20px;
-    *margin: 5px 10px 5px 15px;
-    padding:0;
-    font-size: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
-    -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
-    -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
-    position: relative;
-    vertical-align: top;
-    text-align: center;
-    overflow: hidden;
-    cursor: pointer;
-    filter: alpha(Opacity=100);
-    -moz-opacity: 1;
-    opacity: 1;
-    border: 2px solid #eee;
+    margin: 10px auto;
+    width: 70px;
+    height: 70px;
+    background-image: url("./images/file-icons.png");
+    background-image: url("./images/file-icons.gif") \9;
+    background-position: -140px center;
+    background-repeat: no-repeat;
 }
-
-#search .searchList li.selected {
-    filter: alpha(Opacity=40);
-    -moz-opacity: 0.4;
-    opacity: 0.4;
-    border: 2px solid #00a0e9;
+i.file-preview.file-type-mp4,
+i.file-preview.file-type-swf,
+i.file-preview.file-type-mkv,
+i.file-preview.file-type-avi,
+i.file-preview.file-type-flv,
+i.file-preview.file-type-mov,
+i.file-preview.file-type-mpg,
+i.file-preview.file-type-mpeg,
+i.file-preview.file-type-ogv,
+i.file-preview.file-type-webm,
+i.file-preview.file-type-rm,
+i.file-preview.file-type-rmvb{
+    background-position: -980px center;
 }
-
-#search .searchList li p {
-    background-color: #eee;
-    margin: 0;
-    padding: 0;
-    position: relative;
-    width:100%;
-    height:115px;
-    overflow: hidden;
-}
-
-#search .searchList li p img {
-    cursor: pointer;
-    border: 0;
-}
-
-#search .searchList li a {
-    color: #999;
-    border-top: 1px solid #F2F2F2;
-    background: #FAFAFA;
-    text-align: center;
-    display: block;
-    padding: 0 5px;
-    width: 105px;
-    height:32px;
-    line-height:32px;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-    text-decoration: none;
-    overflow: hidden;
-    word-break: break-all;
-}
-
-#search .searchList a:hover {
-    text-decoration: underline;
-    color: #333;
-}
-#search .searchList .clearFloat{
-    clear: both;
+i.file-preview.file-type-ogg,
+i.file-preview.file-type-wav,
+i.file-preview.file-type-wmv,
+i.file-preview.file-type-mid,
+i.file-preview.file-type-mp3{
+    background-position: -1050px center;
 }
